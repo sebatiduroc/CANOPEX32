@@ -134,8 +134,7 @@
         </div>
       </div>
       <div class="diagnosis-box">
-        <div class="diagnosis-label">ANALYSE &#9658; RÉSULTAT</div>
-        <div class="diagnosis-text" id="diagText"></div>
+        <div class="diagnosis-text" id="diagText"><span style="color:#444;font-size:11px;letter-spacing:1px;">Déclencher pour tester</span></div>
       </div>
     </div>
     <div class="ctrl-col">
@@ -251,15 +250,18 @@ document.getElementById('shutterBtn').addEventListener('pointerdown', function(e
   playShutter(isGood);
   var subEl   = document.getElementById('diapSub');
   var diagsEl = document.getElementById('diapDiags');
+  var diagBox = document.getElementById('diagText');
   if (isGood) {
     subEl.textContent = '✶ PARAMÈTRES CORRECTS ✶';
     subEl.className   = 'diap-sub good';
     diagsEl.innerHTML = '<div class="code-reveal">6</div><span class="diag-good">◆ ISO ' + iso + ' · 1/' + speed + 's · f/' + aperture + ' — combinaison optimale. Sujet figé, bruit maîtrisé, exposition équilibrée.</span>';
+    diagBox.innerHTML = '<span style="color:#555;font-size:9px;letter-spacing:2px;">DERNIÈRE TENTATIVE</span><br><span class="diag-good">✶ ISO ' + iso + ' · 1/' + speed + 's · f/' + aperture + ' — Correct !</span>';
   } else {
     subEl.textContent = 'MAUVAIS PARAMÈTRES DE PRISE DE VUE';
     subEl.className   = 'diap-sub bad';
     var diags = buildDiags(iso, speed, aperture);
     diagsEl.innerHTML = diags.map(function(d){ return '<span class="' + d.c + '">▸ ' + d.t + '</span>'; }).join('<br>');
+    diagBox.innerHTML = '<span style="color:#555;font-size:9px;letter-spacing:2px;">DERNIÈRE TENTATIVE</span><br><span class="diag-warn">ISO ' + iso + ' · 1/' + speed + 's · f/' + aperture + '</span>';
   }
   document.getElementById('shutterOverlay').classList.add('show');
 });
