@@ -329,17 +329,17 @@
 <script>
 const isoValues      = [50, 100, 200, 400, 800, 1600, 3200, 6400, 12800, 25600];
 const speedValues    = [2, 4, 8, 15, 30, 60, 250, 1000, 2000, 8000];
-const apertureValues = [1.4, 2, 2.8, 4, 5.6, 8, 11, 16, 22, 32];
-const GOOD = { iso: 4, speed: 7, aperture: 2 };
-let state = { iso: 9, speed: 0, aperture: 9 };
+const apertureValues = [32, 22, 16, 11, 8, 5.6, 4, 2.8, 2, 1.4];
+const GOOD = { iso: 4, speed: 7, aperture: 7 };
+let state = { iso: 9, speed: 0, aperture: 0 };
 
 const img = new Image();
-img.src = 'crazy-hiker-jumping.jpg';
+img.src = 'background.jpg';
 img.onload  = render;
 img.onerror = render;
 
 const hikerImg = new Image();
-hikerImg.src = 'image_1773868595523.png';
+hikerImg.src = 'hiker.png';
 hikerImg.onload  = render;
 hikerImg.onerror = render;
 
@@ -567,25 +567,20 @@ function render() {
       else if (speed <= 60)  { steps = 7;  totalX = 30;  }
       else if (speed <= 250) { steps = 4;  totalX = 10;  }
 
-      /* Courbure parabolique absolue : le bout de la traînée est toujours
-         à totalY pixels plus bas que le sauteur, quelle que soit la vitesse.
-         totalY est proportionnel à totalX² pour que les courbes se superposent. */
-      var curvature = 0.00045; /* px vertical par px horizontal au carré */
+      var curvature = 0.00045;
       var totalY = curvature * totalX * totalX;
-
       var scaleX = c.width  / hikerImg.naturalWidth;
       var scaleY = c.height / hikerImg.naturalHeight;
 
       if (steps > 0) {
         for (var i = steps - 1; i >= 1; i--) {
-          var t = i / (steps - 1); /* 1 = plus lointain, ~0 = plus proche */
-          /* dx et dy définis en pixels source, mis à l'échelle canvas */
+          var t = i / (steps - 1);
           var dx = -t * totalX * scaleX;
           var dy =  t * t * totalY * scaleY;
           var alpha = 0.48 * (1 - t * 0.82);
           ctx.save();
           ctx.globalAlpha = alpha;
-          ctx.globalCompositeOperation = 'multiply';
+          ctx.globalCompositeOperation = 'source-over';
           ctx.drawImage(hikerImg, dx, dy, c.width, c.height);
           ctx.restore();
         }
@@ -602,7 +597,7 @@ function render() {
       else if (speed <= 250) hikerBlur = 0.4;
       ctx.save();
       if (hikerBlur > 0) ctx.filter = 'blur(' + hikerBlur + 'px)';
-      ctx.globalCompositeOperation = 'multiply';
+      ctx.globalCompositeOperation = 'source-over';
       ctx.drawImage(hikerImg, 0, 0, c.width, c.height);
       ctx.restore();
       ctx.filter = 'none';
@@ -648,7 +643,7 @@ function render() {
   } else {
     ctx.fillStyle = '#111'; ctx.fillRect(0, 0, c.width, c.height);
     ctx.fillStyle = '#555'; ctx.font = '13px Courier New';
-    ctx.fillText('Placez crazy-hiker-jumping.jpg dans le meme dossier', 18, c.height/2);
+    ctx.fillText('Placez background.jpg et hiker.png dans le meme dossier', 18, c.height/2);
   }
 }
 
