@@ -328,13 +328,12 @@
 </div>
 
 <script>
-const isoValues      = [50, 100, 200, 400, 800, 1600, 3200, 6400, 12800, 25600];
-/* Vitesses en secondes */
-const speedValues    = [1/8000, 1/4000, 1/2000, 1/1000, 1/500, 1/250, 1/125, 1/60, 1/30, 1/15, 1/8, 1/4, 1/2, 1, 2, 4, 8, 16, 30, 60];
-/* Ouvertures (du plus fermé au plus ouvert, bouton + = ouvrir) */
+/* Vitesses en secondes — index 0 = lent (60s), index 19 = rapide (1/8000s), + = plus rapide */
+const speedValues    = [60, 30, 16, 8, 4, 2, 1, 1/2, 1/4, 1/8, 1/15, 1/30, 1/60, 1/125, 1/250, 1/500, 1/1000, 1/2000, 1/4000, 1/8000];
+/* Ouvertures — index 0 = fermé (f/90), index 13 = ouvert (f/1), + = ouvrir */
 const apertureValues = [90, 64, 45, 32, 22, 16, 11, 8, 5.6, 4, 2.8, 2, 1.4, 1];
-const GOOD = { iso: 4, speed: 3, aperture: 10 }; /* ISO 800 · 1/1000s · f/2.8 */
-let state = { iso: 9, speed: 19, aperture: 0 };  /* ISO max · vitesse lente · ouverture fermée */
+const GOOD = { iso: 4, speed: 16, aperture: 10 }; /* ISO 800 · 1/1000s · f/2.8 */
+let state = { iso: 9, speed: 0, aperture: 0 };    /* ISO max · vitesse lente · ouverture fermée */
 
 const img = new Image();
 img.src = 'background.jpg';
