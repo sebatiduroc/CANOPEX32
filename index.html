@@ -54,11 +54,17 @@
   .diag-good { color: #4f4; }
   .diag-warn { color: #fa0; }
   .diag-bad  { color: #f44; }
-  .ctrl-col { width: 220px; flex-shrink: 0; display: flex; flex-direction: column; gap: 10px; }
-  .controls-panel { background: #111; border-radius: 6px; padding: 14px 12px; display: flex; flex-direction: column; gap: 16px; flex: 1; }
+  .ctrl-col { width: 220px; flex-shrink: 0; display: flex; flex-direction: column; gap: 6px; }
+  .controls-panel { background: #111; border-radius: 6px; padding: 14px 12px; display: flex; flex-direction: column; gap: 14px; flex: 1; }
   .ctrl-group { display: flex; flex-direction: column; gap: 6px; }
-  .ctrl-label { color: #777; font-size: 9px; letter-spacing: 2px; text-transform: uppercase; border-bottom: 1px solid #222; padding-bottom: 4px; }
-  .ctrl-value-display { background: #000; border: 1px solid #333; border-radius: 4px; color: #f90; font-size: 22px; font-weight: bold; text-align: center; padding: 8px 6px; display: flex; align-items: center; justify-content: center; user-select: none; }
+  .ctrl-label { font-size: 9px; letter-spacing: 2px; text-transform: uppercase; border-bottom: 1px solid #222; padding-bottom: 4px; }
+  .ctrl-label-iso      { color: #b8a010; }
+  .ctrl-label-speed    { color: #9040b0; }
+  .ctrl-label-aperture { color: #208040; }
+  .ctrl-value-display  { background: #000; border: 1px solid #333; border-radius: 4px; font-size: 22px; font-weight: bold; text-align: center; padding: 8px 6px; display: flex; align-items: center; justify-content: center; user-select: none; }
+  .ctrl-value-iso      { color: #e8d020; border-color: #4a4010; }
+  .ctrl-value-speed    { color: #c060e0; border-color: #501870; }
+  .ctrl-value-aperture { color: #40c060; border-color: #104020; }
   .ctrl-buttons { display: flex; gap: 4px; }
   .ctrl-btn {
     flex: 1; background: #222; border: 1px solid #444; color: #ccc;
@@ -67,8 +73,7 @@
     touch-action: manipulation;
     -webkit-tap-highlight-color: transparent;
     user-select: none; -webkit-user-select: none;
-    outline: none;
-    -webkit-touch-callout: none;
+    outline: none; -webkit-touch-callout: none;
   }
   .ctrl-btn:focus { outline: none; }
   .ctrl-btn:disabled { opacity: 0.25; cursor: default; background: #1a1a1a; }
@@ -269,24 +274,24 @@
     <div class="ctrl-col">
       <div class="controls-panel">
         <div class="ctrl-group">
-          <div class="ctrl-label">ISO</div>
-          <div class="ctrl-value-display" id="isoDisplay">25600</div>
-          <div class="ctrl-buttons">
-            <button tabindex="-1" class="ctrl-btn" id="iso-minus">&#8722;</button>
-            <button tabindex="-1" class="ctrl-btn" id="iso-plus">+</button>
-          </div>
-        </div>
-        <div class="ctrl-group">
-          <div class="ctrl-label">Vitesse</div>
-          <div class="ctrl-value-display" id="speedDisplay">1/2</div>
+          <div class="ctrl-label ctrl-label-speed">Vitesse</div>
+          <div class="ctrl-value-display ctrl-value-speed" id="speedDisplay">1/2 s</div>
           <div class="ctrl-buttons">
             <button tabindex="-1" class="ctrl-btn" id="speed-minus">&#8722;</button>
             <button tabindex="-1" class="ctrl-btn" id="speed-plus">+</button>
           </div>
         </div>
         <div class="ctrl-group">
-          <div class="ctrl-label">Ouverture</div>
-          <div class="ctrl-value-display" id="apertureDisplay">f/32</div>
+          <div class="ctrl-label ctrl-label-iso">ISO</div>
+          <div class="ctrl-value-display ctrl-value-iso" id="isoDisplay">25600</div>
+          <div class="ctrl-buttons">
+            <button tabindex="-1" class="ctrl-btn" id="iso-minus">&#8722;</button>
+            <button tabindex="-1" class="ctrl-btn" id="iso-plus">+</button>
+          </div>
+        </div>
+        <div class="ctrl-group">
+          <div class="ctrl-label ctrl-label-aperture">Ouverture</div>
+          <div class="ctrl-value-display ctrl-value-aperture" id="apertureDisplay">f/32</div>
           <div class="ctrl-buttons">
             <button tabindex="-1" class="ctrl-btn" id="aperture-minus">&#8722;</button>
             <button tabindex="-1" class="ctrl-btn" id="aperture-plus">+</button>
@@ -500,7 +505,7 @@ function render() {
   var speed    = speedValues[state.speed];
   var aperture = apertureValues[state.aperture];
   document.getElementById('isoDisplay').textContent      = iso;
-  document.getElementById('speedDisplay').innerHTML      = '1/' + speed + '<span style="font-size:12px;color:#a60;margin-left:3px;">s</span>';
+  document.getElementById('speedDisplay').innerHTML      = '1/' + speed + '<span style="font-size:12px;color:#9040b0;margin-left:3px;">s</span>';
   document.getElementById('apertureDisplay').textContent = 'f/' + aperture;
   document.getElementById('hudISO').textContent          = iso;
   document.getElementById('hudSpeed').textContent        = speed;
@@ -641,7 +646,7 @@ function buildDiags(iso, speed, aperture) {
     else                   e1 = 'Risque de micro-flou sur un sujet aussi dynamique';
     diags.push({c: sev1, t: e1 + ' — [vitesse : 1/' + speed + 's]'});
   } else if (speed > 1000) {
-    diags.push({c:'diag-warn', t:"Vitesse très élevée, triangle d'exposition difficile à équilibrer — [vitesse : 1/" + speed + 's]'});
+    diags.push({c:'diag-warn', t:"Vitesse excessive pour une scène en basse lumière : l'exposition peut sembler équilibrée, mais au prix d'un bruit numérique rédhibitoire — [vitesse : 1/" + speed + 's]'});
   }
   if (aperture < 2.8) {
     var e2 = aperture <= 1.4
@@ -684,6 +689,7 @@ function buildDiags(iso, speed, aperture) {
   else if (totalEV >  2.2) diags.push({c:'diag-bad',  t:'Hautes lumières totalement brûlées, surexposition sévère — [' + evStr + ']'});
   else if (totalEV >  1.0) diags.push({c:'diag-bad',  t:'Image trop claire, zones lumineuses inexploitables — [' + evStr + ']'});
   else if (totalEV >  0.4) diags.push({c:'diag-warn', t:'Image légèrement surexposée — [' + evStr + ']'});
+  else if (speed >= 2000 && iso >= 6400) diags.push({c:'diag-warn', t:"EV équilibré en apparence, mais un bon EV ne garantit pas une bonne photo : ici l'exposition est compensée par un bruit numérique rédhibitoire — [" + evStr + ']'});
   return diags;
 }
 
@@ -723,6 +729,7 @@ document.getElementById('fullscreenBtn').addEventListener('pointerdown', functio
 });
 
 window.addEventListener('resize', function(){ setTimeout(render, 80); });
+
 render();
 </script>
 </body>
