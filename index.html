@@ -262,7 +262,7 @@
               <span class="expo-label">+3</span>
             </div>
             <div class="hud-bottom">
-              <div class="hud-val">1/<span id="hudSpeed">2</span>s</div>
+              <div class="hud-val"><span id="hudSpeed">1/2s</span></div>
               <div class="hud-val" style="font-size:11px;" id="hudHist">&#9601;&#9602;&#9604;&#9606;&#9608;&#9606;&#9603;</div>
               <div class="hud-val">f/<span id="hudAperture">32</span></div>
             </div>
@@ -329,10 +329,12 @@
 
 <script>
 const isoValues      = [50, 100, 200, 400, 800, 1600, 3200, 6400, 12800, 25600];
-const speedValues    = [2, 4, 8, 15, 30, 60, 250, 1000, 2000, 8000];
-const apertureValues = [32, 22, 16, 11, 8, 5.6, 4, 2.8, 2, 1.4];
-const GOOD = { iso: 4, speed: 7, aperture: 7 };
-let state = { iso: 9, speed: 0, aperture: 0 };
+/* Vitesses en secondes */
+const speedValues    = [1/8000, 1/4000, 1/2000, 1/1000, 1/500, 1/250, 1/125, 1/60, 1/30, 1/15, 1/8, 1/4, 1/2, 1, 2, 4, 8, 16, 30, 60];
+/* Ouvertures (du plus fermé au plus ouvert, bouton + = ouvrir) */
+const apertureValues = [90, 64, 45, 32, 22, 16, 11, 8, 5.6, 4, 2.8, 2, 1.4, 1];
+const GOOD = { iso: 4, speed: 3, aperture: 10 }; /* ISO 800 · 1/1000s · f/2.8 */
+let state = { iso: 9, speed: 19, aperture: 0 };  /* ISO max · vitesse lente · ouverture fermée */
 
 const img = new Image();
 img.src = 'background.jpg';
@@ -510,29 +512,36 @@ document.getElementById('shutterOverlay').addEventListener('pointerdown', functi
 });
 
 /* RENDU */
+function fmtSpeed(s) {
+  /* s est en secondes */
+  if (s >= 1) return s + '"';              /* poses longues : 1" 2" … 60" */
+  var denom = Math.round(1 / s);
+  return '1/' + denom;
+}
+
 function render() {
   var iso      = isoValues[state.iso];
   var speed    = speedValues[state.speed];
   var aperture = apertureValues[state.aperture];
   document.getElementById('isoDisplay').textContent      = iso;
-  document.getElementById('speedDisplay').innerHTML      = '1/' + speed + '<span style="font-size:12px;color:#9040b0;margin-left:3px;">s</span>';
+  document.getElementById('speedDisplay').innerHTML      = fmtSpeed(speed) + (speed < 1 ? '<span style="font-size:12px;color:#9040b0;margin-left:3px;">s</span>' : '');
   document.getElementById('apertureDisplay').textContent = 'f/' + aperture;
   document.getElementById('hudISO').textContent          = iso;
-  document.getElementById('hudSpeed').textContent        = speed;
+  document.getElementById('hudSpeed').textContent        = fmtSpeed(speed);
   document.getElementById('hudAperture').textContent     = aperture;
   /* Boutons limites */
   document.getElementById('iso-minus').disabled      = (state.iso      === 0);
-  document.getElementById('iso-plus').disabled       = (state.iso      === 9);
+  document.getElementById('iso-plus').disabled       = (state.iso      === isoValues.length - 1);
   document.getElementById('speed-minus').disabled    = (state.speed    === 0);
-  document.getElementById('speed-plus').disabled     = (state.speed    === 9);
+  document.getElementById('speed-plus').disabled     = (state.speed    === speedValues.length - 1);
   document.getElementById('aperture-minus').disabled = (state.aperture === 0);
-  document.getElementById('aperture-plus').disabled  = (state.aperture === 9);
+  document.getElementById('aperture-plus').disabled  = (state.aperture === apertureValues.length - 1);
   var c   = document.getElementById('photoCanvas');
   c.width   = c.parentElement.offsetWidth  || 600;
   c.height  = c.parentElement.offsetHeight || 400;
   var ctx = c.getContext('2d');
   var isoEV      =  Math.log2(iso / 800);
-  var speedEV    = -Math.log2(speed / 1000);
+  var speedEV    =  Math.log2(speed / (1/1000)); /* référence : 1/1000s */
   var apertureEV = -2 * Math.log2(aperture / 2.8);
   var totalEV    = isoEV + speedEV + apertureEV;
   var evPct = 50 + (totalEV / 3) * 50;
@@ -548,13 +557,15 @@ function render() {
   /* 1. Fond */
   if (img.complete && img.naturalWidth > 0) {
     var camBlur = 0;
-    if      (speed <= 2)   camBlur = 9.0;
-    else if (speed <= 4)   camBlur = 5.8;
-    else if (speed <= 8)   camBlur = 3.7;
-    else if (speed <= 15)  camBlur = 2.3;
-    else if (speed <= 30)  camBlur = 1.4;
-    else if (speed <= 60)  camBlur = 0.7;
-    else if (speed <= 250) camBlur = 0.2;
+    if      (speed >= 2)      camBlur = 9.0;
+    else if (speed >= 1)      camBlur = 7.0;
+    else if (speed >= 1/2)    camBlur = 5.8;
+    else if (speed >= 1/4)    camBlur = 4.5;
+    else if (speed >= 1/8)    camBlur = 3.7;
+    else if (speed >= 1/15)   camBlur = 2.3;
+    else if (speed >= 1/30)   camBlur = 1.4;
+    else if (speed >= 1/60)   camBlur = 0.7;
+    else if (speed >= 1/125)  camBlur = 0.2;
     if (camBlur > 0) {
       ctx.save();
       ctx.filter = 'blur(' + camBlur + 'px)';
@@ -573,13 +584,15 @@ function render() {
   /* 2. Traînées paraboliques du personnage (trajectoire de saut) */
   if (hikerImg.complete && hikerImg.naturalWidth > 0) {
       var steps = 0, totalX = 0;
-      if      (speed <= 2)   { steps = 32; totalX = 360; }
-      else if (speed <= 4)   { steps = 26; totalX = 232; }
-      else if (speed <= 8)   { steps = 20; totalX = 150; }
-      else if (speed <= 15)  { steps = 15; totalX = 93;  }
-      else if (speed <= 30)  { steps = 11; totalX = 57;  }
-      else if (speed <= 60)  { steps = 7;  totalX = 30;  }
-      else if (speed <= 250) { steps = 4;  totalX = 10;  }
+      if      (speed >= 2)      { steps = 32; totalX = 360; }
+      else if (speed >= 1)      { steps = 30; totalX = 310; }
+      else if (speed >= 1/2)    { steps = 32; totalX = 360; }
+      else if (speed >= 1/4)    { steps = 26; totalX = 232; }
+      else if (speed >= 1/8)    { steps = 20; totalX = 150; }
+      else if (speed >= 1/15)   { steps = 15; totalX = 93;  }
+      else if (speed >= 1/30)   { steps = 11; totalX = 57;  }
+      else if (speed >= 1/60)   { steps = 7;  totalX = 30;  }
+      else if (speed >= 1/125)  { steps = 4;  totalX = 10;  }
 
       var curvature = 0.00045;
       var totalY = curvature * totalX * totalX;
@@ -602,13 +615,15 @@ function render() {
 
       /* Sauteur final : flou proportionnel à la lenteur */
       var hikerBlur = 0;
-      if      (speed <= 2)   hikerBlur = 14;
-      else if (speed <= 4)   hikerBlur = 10;
-      else if (speed <= 8)   hikerBlur = 7;
-      else if (speed <= 15)  hikerBlur = 4.5;
-      else if (speed <= 30)  hikerBlur = 2.5;
-      else if (speed <= 60)  hikerBlur = 1.2;
-      else if (speed <= 250) hikerBlur = 0.4;
+      if      (speed >= 2)     hikerBlur = 14;
+      else if (speed >= 1)     hikerBlur = 12;
+      else if (speed >= 1/2)   hikerBlur = 14;
+      else if (speed >= 1/4)   hikerBlur = 10;
+      else if (speed >= 1/8)   hikerBlur = 7;
+      else if (speed >= 1/15)  hikerBlur = 4.5;
+      else if (speed >= 1/30)  hikerBlur = 2.5;
+      else if (speed >= 1/60)  hikerBlur = 1.2;
+      else if (speed >= 1/125) hikerBlur = 0.4;
       ctx.save();
       if (hikerBlur > 0) ctx.filter = 'blur(' + hikerBlur + 'px)';
       ctx.globalCompositeOperation = 'source-over';
@@ -660,23 +675,29 @@ function render() {
 
 function buildDiags(iso, speed, aperture) {
   var isoEV      =  Math.log2(iso / 800);
-  var speedEV    = -Math.log2(speed / 1000);
+  var speedEV    =  Math.log2(speed / (1/1000)); /* référence 1/1000s */
   var apertureEV = -2 * Math.log2(aperture / 2.8);
   var totalEV    = isoEV + speedEV + apertureEV;
+  var speedStr   = fmtSpeed(speed) + (speed < 1 ? 's' : '');
   var diags = [];
-  if (speed < 1000) {
-    var sev1 = speed <= 60 ? 'diag-bad' : 'diag-warn';
+
+  /* Vitesse trop lente → flou de mouvement */
+  if (speed > 1/500) {
+    var sev1 = speed >= 1/60 ? 'diag-bad' : 'diag-warn';
     var e1;
-    if      (speed <= 2)   e1 = 'Le sujet est totalement fondu, photo inexploitable';
-    else if (speed <= 8)   e1 = 'Le sujet est très fortement flou, forme méconnaissable';
-    else if (speed <= 30)  e1 = 'Le sujet est flou, mouvement non figé';
-    else if (speed <= 60)  e1 = 'Le sujet manque de netteté, légère traînée visible';
-    else if (speed <= 250) e1 = 'Légère imprécision sur le contour du sujet en mouvement';
-    else                   e1 = 'Risque de micro-flou sur un sujet aussi dynamique';
-    diags.push({c: sev1, t: e1 + ' — [vitesse : 1/' + speed + 's]'});
-  } else if (speed > 1000) {
-    diags.push({c:'diag-warn', t:"Vitesse excessive pour une scène en basse lumière : l'exposition peut sembler équilibrée, mais au prix d'un bruit numérique rédhibitoire — [vitesse : 1/" + speed + 's]'});
+    if      (speed >= 2)      e1 = 'Le sujet est totalement fondu, photo inexploitable';
+    else if (speed >= 1/2)    e1 = 'Le sujet est très fortement flou, forme méconnaissable';
+    else if (speed >= 1/15)   e1 = 'Le sujet est flou, mouvement non figé';
+    else if (speed >= 1/60)   e1 = 'Le sujet manque de netteté, légère traînée visible';
+    else if (speed >= 1/250)  e1 = 'Légère imprécision sur le contour du sujet en mouvement';
+    else                      e1 = 'Risque de micro-flou sur un sujet aussi dynamique';
+    diags.push({c: sev1, t: e1 + ' — [vitesse : ' + speedStr + ']'});
   }
+  /* Vitesse excessive */
+  if (speed < 1/2000) {
+    diags.push({c:'diag-warn', t:"Vitesse excessive pour une scène en basse lumière : l'exposition peut sembler équilibrée, mais au prix d'un bruit numérique rédhibitoire — [vitesse : " + speedStr + ']'});
+  }
+
   if (aperture < 2.8) {
     var e2 = aperture <= 1.4
       ? 'Profondeur de champ extrêmement réduite, risque fort que le sujet soit hors plan de netteté'
@@ -685,7 +706,8 @@ function buildDiags(iso, speed, aperture) {
   } else if (aperture > 2.8) {
     var sev2 = aperture >= 16 ? 'diag-bad' : 'diag-warn';
     var e3;
-    if      (aperture >= 32) e3 = 'Image globalement floue et terne malgré la mise au point (diffraction sévère)';
+    if      (aperture >= 45) e3 = 'Image globalement floue et terne malgré la mise au point (diffraction sévère)';
+    else if (aperture >= 32) e3 = 'Image globalement floue et terne malgré la mise au point (diffraction sévère)';
     else if (aperture >= 22) e3 = "Piqué dégradé sur l'ensemble de l'image (diffraction)";
     else if (aperture >= 16) e3 = 'Perte de netteté générale visible (début de diffraction)';
     else if (aperture >= 11) e3 = "L'arrière-plan est aussi net que le sujet, image sans relief";
@@ -711,14 +733,14 @@ function buildDiags(iso, speed, aperture) {
     else                   e5 = 'Grain visible, bruit chromatique dans les zones sombres';
     diags.push({c: sev4, t: e5 + ' — [ISO : ' + iso + ']'});
   }
-  var evStr = 'ISO ' + iso + ' · 1/' + speed + 's · f/' + aperture;
+  var evStr = 'ISO ' + iso + ' · ' + speedStr + ' · f/' + aperture;
   if      (totalEV < -2.2) diags.push({c:'diag-bad',  t:'Image quasiment noire, sous-exposition sévère — [' + evStr + ']'});
   else if (totalEV < -1.0) diags.push({c:'diag-bad',  t:'Image trop sombre, détails perdus dans les ombres — [' + evStr + ']'});
   else if (totalEV < -0.4) diags.push({c:'diag-warn', t:'Image légèrement sous-exposée — [' + evStr + ']'});
   else if (totalEV >  2.2) diags.push({c:'diag-bad',  t:'Hautes lumières totalement brûlées, surexposition sévère — [' + evStr + ']'});
   else if (totalEV >  1.0) diags.push({c:'diag-bad',  t:'Image trop claire, zones lumineuses inexploitables — [' + evStr + ']'});
   else if (totalEV >  0.4) diags.push({c:'diag-warn', t:'Image légèrement surexposée — [' + evStr + ']'});
-  else if (speed >= 2000 && iso >= 6400) diags.push({c:'diag-warn', t:"EV équilibré en apparence, mais un bon EV ne garantit pas une bonne photo : ici l'exposition est compensée par un bruit numérique rédhibitoire — [" + evStr + ']'});
+  else if (speed < 1/2000 && iso >= 6400) diags.push({c:'diag-warn', t:"EV équilibré en apparence, mais un bon EV ne garantit pas une bonne photo : ici l'exposition est compensée par un bruit numérique rédhibitoire — [" + evStr + ']'});
   return diags;
 }
 
