@@ -692,18 +692,18 @@ function buildDiags(iso, speed, aperture) {
     else if (speed >= 1/60)   e1 = 'Le sujet manque de netteté, légère traînée visible';
     else if (speed >= 1/250)  e1 = 'Légère imprécision sur le contour du sujet en mouvement';
     else                      e1 = 'Risque de micro-flou sur un sujet aussi dynamique';
-    diags.push({c: sev1, t: e1 + ' — [vitesse : ' + speedStr + ']'});
+    diags.push({c: sev1, t: e1 + ' — [SOLUTION : augmenter la vitesse]'});
   }
   /* Vitesse excessive */
   if (speed < 1/2000) {
-    diags.push({c:'diag-warn', t:"Vitesse excessive pour une scène en basse lumière : l'exposition peut sembler équilibrée, mais au prix d'un bruit numérique rédhibitoire — [vitesse : " + speedStr + ']'});
+    diags.push({c:'diag-warn', t:"Vitesse excessive pour une scène en basse lumière : l'exposition peut sembler équilibrée, mais au prix d'un bruit numérique rédhibitoire — [SOLUTION : diminuer la vitesse]"});
   }
 
   if (aperture < 2.8) {
     var e2 = aperture <= 1.4
       ? 'Profondeur de champ extrêmement réduite, risque fort que le sujet soit hors plan de netteté'
       : 'Profondeur de champ très faible, le sujet peut partiellement sortir du plan net';
-    diags.push({c:'diag-warn', t: e2 + ' — [ouverture : f/' + aperture + ']'});
+    diags.push({c:'diag-warn', t: e2 + ' — [SOLUTION : augmenter l\'ouverture]'});
   } else if (aperture > 2.8) {
     var sev2 = aperture >= 16 ? 'diag-bad' : 'diag-warn';
     var e3;
@@ -714,7 +714,7 @@ function buildDiags(iso, speed, aperture) {
     else if (aperture >= 11) e3 = "L'arrière-plan est aussi net que le sujet, image sans relief";
     else if (aperture >= 8)  e3 = "Profondeur de champ trop grande, arrière-plan peu séparé du sujet";
     else                     e3 = "Le sujet manque d'isolation, arrière-plan trop présent";
-    diags.push({c: sev2, t: e3 + ' — [ouverture : f/' + aperture + ']'});
+    diags.push({c: sev2, t: e3 + ' — [SOLUTION : diminuer l\'ouverture]'});
   }
   if (iso < 800) {
     var sev3 = iso <= 100 ? 'diag-bad' : 'diag-warn';
@@ -723,7 +723,7 @@ function buildDiags(iso, speed, aperture) {
     else if (iso <= 100) e4 = 'Sensibilité insuffisante pour cette lumière, image sous-exposée';
     else if (iso <= 200) e4 = 'Sensibilité un peu faible pour une scène en soirée';
     else                 e4 = 'Sensibilité légèrement insuffisante pour bien exposer';
-    diags.push({c: sev3, t: e4 + ' — [ISO : ' + iso + ']'});
+    diags.push({c: sev3, t: e4 + ' — [SOLUTION : augmenter les ISO]'});
   } else if (iso > 800) {
     var sev4 = iso >= 3200 ? 'diag-bad' : 'diag-warn';
     var e5;
@@ -732,7 +732,7 @@ function buildDiags(iso, speed, aperture) {
     else if (iso >= 6400)  e5 = 'Bruit important, couleurs altérées et détails perdus';
     else if (iso >= 3200)  e5 = 'Grain fort et bruit chromatique très perceptible';
     else                   e5 = 'Grain visible, bruit chromatique dans les zones sombres';
-    diags.push({c: sev4, t: e5 + ' — [ISO : ' + iso + ']'});
+    diags.push({c: sev4, t: e5 + ' — [SOLUTION : diminuer les ISO]'});
   }
   var evStr = 'ISO ' + iso + ' · ' + speedStr + ' · f/' + aperture;
   if      (totalEV < -2.2) diags.push({c:'diag-bad',  t:'Image quasiment noire, sous-exposition sévère — [' + evStr + ']'});
