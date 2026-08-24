@@ -677,15 +677,10 @@ function render() {
 }
 
 function buildDiags(iso, speed, aperture) {
-  var isoEV      =  Math.log2(iso / 800);
-  var speedEV    =  Math.log2(speed / (1/1000)); /* référence 1/1000s */
-  var apertureEV = -2 * Math.log2(aperture / 2.8);
-  var totalEV    = isoEV + speedEV + apertureEV;
-  var speedStr   = fmtSpeed(speed) + (speed < 1 ? 's' : '');
   var diags = [];
 
   /* Vitesse trop lente → flou de mouvement */
-  if (speed > 1/500) {
+  if (speed >= 1/500) {
     var sev1 = speed >= 1/60 ? 'diag-bad' : 'diag-warn';
     var e1;
     if      (speed >= 2)      e1 = 'Le sujet est totalement fondu, photo inexploitable';
@@ -697,8 +692,27 @@ function buildDiags(iso, speed, aperture) {
     diags.push({c: sev1, t: e1 + ' — [SOLUTION : augmenter la vitesse d\'obturation]'});
   }
   /* Vitesse excessive */
-  if (speed < 1/2000) {
+  if (speed <= 1/2000) {
     diags.push({c:'diag-warn', t:"Vitesse excessive pour une scène en basse lumière : l'exposition peut sembler équilibrée, mais au prix d'un bruit numérique rédhibitoire — [SOLUTION : diminuer la vitesse d'obturation]"});
+  }
+
+  if (iso < 800) {
+    var sev3 = iso <= 100 ? 'diag-bad' : 'diag-warn';
+    var e4;
+    if      (iso <= 50)  e4 = 'Capteur très peu sensible, image sombre dans ces conditions';
+    else if (iso <= 100) e4 = 'Sensibilité insuffisante pour cette lumière, image sous-exposée';
+    else if (iso <= 200) e4 = 'Sensibilité un peu faible pour une scène en soirée';
+    else                 e4 = 'Sensibilité légèrement insuffisante pour bien exposer';
+    diags.push({c: sev3, t: e4 + ' — [SOLUTION : augmenter les ISO]'});
+  } else if (iso > 800) {
+    var sev4 = iso >= 3200 ? 'diag-bad' : 'diag-warn';
+    var e5;
+    if      (iso >= 25600) e5 = 'Bruit numérique extrême, image granuleuse et inexploitable';
+    else if (iso >= 12800) e5 = 'Bruit numérique très fort, détails noyés dans le grain';
+    else if (iso >= 6400)  e5 = 'Bruit important, couleurs altérées et détails perdus';
+    else if (iso >= 3200)  e5 = 'Grain fort et bruit chromatique très perceptible';
+    else                   e5 = 'Grain visible, bruit chromatique dans les zones sombres';
+    diags.push({c: sev4, t: e5 + ' — [SOLUTION : diminuer les ISO]'});
   }
 
   if (aperture < 2.8) {
@@ -718,32 +732,6 @@ function buildDiags(iso, speed, aperture) {
     else                     e3 = "Le sujet manque d'isolation, arrière-plan trop présent";
     diags.push({c: sev2, t: e3 + ' — [SOLUTION : ouvrir le diaphragme]'});
   }
-  if (iso < 800) {
-    var sev3 = iso <= 100 ? 'diag-bad' : 'diag-warn';
-    var e4;
-    if      (iso <= 50)  e4 = 'Capteur très peu sensible, image sombre dans ces conditions';
-    else if (iso <= 100) e4 = 'Sensibilité insuffisante pour cette lumière, image sous-exposée';
-    else if (iso <= 200) e4 = 'Sensibilité un peu faible pour une scène en soirée';
-    else                 e4 = 'Sensibilité légèrement insuffisante pour bien exposer';
-    diags.push({c: sev3, t: e4 + ' — [SOLUTION : augmenter les ISO]'});
-  } else if (iso > 800) {
-    var sev4 = iso >= 3200 ? 'diag-bad' : 'diag-warn';
-    var e5;
-    if      (iso >= 25600) e5 = 'Bruit numérique extrême, image granuleuse et inexploitable';
-    else if (iso >= 12800) e5 = 'Bruit numérique très fort, détails noyés dans le grain';
-    else if (iso >= 6400)  e5 = 'Bruit important, couleurs altérées et détails perdus';
-    else if (iso >= 3200)  e5 = 'Grain fort et bruit chromatique très perceptible';
-    else                   e5 = 'Grain visible, bruit chromatique dans les zones sombres';
-    diags.push({c: sev4, t: e5 + ' — [SOLUTION : diminuer les ISO]'});
-  }
-  var evStr = 'ISO ' + iso + ' · ' + speedStr + ' · f/' + aperture;
-  if      (totalEV < -2.2) diags.push({c:'diag-bad',  t:'Image quasiment noire, sous-exposition sévère — [' + evStr + ']'});
-  else if (totalEV < -1.0) diags.push({c:'diag-bad',  t:'Image trop sombre, détails perdus dans les ombres — [' + evStr + ']'});
-  else if (totalEV < -0.4) diags.push({c:'diag-warn', t:'Image légèrement sous-exposée — [' + evStr + ']'});
-  else if (totalEV >  2.2) diags.push({c:'diag-bad',  t:'Hautes lumières totalement brûlées, surexposition sévère — [' + evStr + ']'});
-  else if (totalEV >  1.0) diags.push({c:'diag-bad',  t:'Image trop claire, zones lumineuses inexploitables — [' + evStr + ']'});
-  else if (totalEV >  0.4) diags.push({c:'diag-warn', t:'Image légèrement surexposée — [' + evStr + ']'});
-  else if (speed < 1/2000 && iso >= 6400) diags.push({c:'diag-warn', t:"EV équilibré en apparence, mais un bon EV ne garantit pas une bonne photo : ici l'exposition est compensée par un bruit numérique rédhibitoire — [" + evStr + ']'});
   return diags;
 }
 
