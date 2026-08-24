@@ -76,6 +76,7 @@
     outline: none; -webkit-touch-callout: none;
   }
   .ctrl-btn:focus { outline: none; }
+  .ctrl-btn-text { font-size: 13px; letter-spacing: 0.5px; }
   .ctrl-btn:disabled { opacity: 0.25; cursor: default; background: #1a1a1a; }
   .bottom-bar { display: flex; align-items: center; justify-content: space-between; padding: 4px 2px; flex-shrink: 0; }
   .shutter-btn {
@@ -218,7 +219,7 @@
     <ul class="welcome-rules">
       <li>
         <span class="icon">🎚️</span>
-        <span>Règle les <strong style="color:#f90">3 paramètres</strong> à droite : <strong style="color:#f90">ISO</strong>, <strong style="color:#f90">Vitesse</strong> et <strong style="color:#f90">Ouverture</strong> avec les boutons + et −</span>
+        <span>Règle les <strong style="color:#f90">3 paramètres</strong> à droite : <strong style="color:#f90">ISO</strong>, <strong style="color:#f90">Vitesse d'obturation</strong> et <strong style="color:#f90">Ouverture</strong> avec les boutons + et −</span>
       </li>
       <li>
         <span class="icon">📸</span>
@@ -242,6 +243,7 @@
     <div class="grip-bump"></div>
     <div class="brand">CANOPEX-32</div>
     <div class="model">DIGITAL SLR</div>
+    <div class="credit" style="color:#1a1a1a; font-size: 8px; user-select: text;">Sébastien Dumortier - 2026</div>
     <div class="mode-dial" id="fullscreenBtn" title="Plein écran">M</div>
   </div>
   <div class="main-area">
@@ -276,7 +278,7 @@
     <div class="ctrl-col">
       <div class="controls-panel">
         <div class="ctrl-group">
-          <div class="ctrl-label ctrl-label-speed">Vitesse</div>
+          <div class="ctrl-label ctrl-label-speed">Vitesse d'obturation</div>
           <div class="ctrl-value-display ctrl-value-speed" id="speedDisplay">1/2 s</div>
           <div class="ctrl-buttons">
             <button tabindex="-1" class="ctrl-btn" id="speed-minus">&#8722;</button>
@@ -292,11 +294,11 @@
           </div>
         </div>
         <div class="ctrl-group">
-          <div class="ctrl-label ctrl-label-aperture">Ouverture</div>
+          <div class="ctrl-label ctrl-label-aperture">Ouverture (diaphragme)</div>
           <div class="ctrl-value-display ctrl-value-aperture" id="apertureDisplay">f/32</div>
           <div class="ctrl-buttons">
-            <button tabindex="-1" class="ctrl-btn" id="aperture-minus">&#8722;</button>
-            <button tabindex="-1" class="ctrl-btn" id="aperture-plus">+</button>
+            <button tabindex="-1" class="ctrl-btn ctrl-btn-text" id="aperture-minus">Fermer</button>
+            <button tabindex="-1" class="ctrl-btn ctrl-btn-text" id="aperture-plus">Ouvrir</button>
           </div>
         </div>
       </div>
@@ -692,18 +694,18 @@ function buildDiags(iso, speed, aperture) {
     else if (speed >= 1/60)   e1 = 'Le sujet manque de netteté, légère traînée visible';
     else if (speed >= 1/250)  e1 = 'Légère imprécision sur le contour du sujet en mouvement';
     else                      e1 = 'Risque de micro-flou sur un sujet aussi dynamique';
-    diags.push({c: sev1, t: e1 + ' — [SOLUTION : augmenter la vitesse]'});
+    diags.push({c: sev1, t: e1 + ' — [SOLUTION : augmenter la vitesse d\'obturation]'});
   }
   /* Vitesse excessive */
   if (speed < 1/2000) {
-    diags.push({c:'diag-warn', t:"Vitesse excessive pour une scène en basse lumière : l'exposition peut sembler équilibrée, mais au prix d'un bruit numérique rédhibitoire — [SOLUTION : diminuer la vitesse]"});
+    diags.push({c:'diag-warn', t:"Vitesse excessive pour une scène en basse lumière : l'exposition peut sembler équilibrée, mais au prix d'un bruit numérique rédhibitoire — [SOLUTION : diminuer la vitesse d'obturation]"});
   }
 
   if (aperture < 2.8) {
     var e2 = aperture <= 1.4
       ? 'Profondeur de champ extrêmement réduite, risque fort que le sujet soit hors plan de netteté'
       : 'Profondeur de champ très faible, le sujet peut partiellement sortir du plan net';
-    diags.push({c:'diag-warn', t: e2 + ' — [SOLUTION : augmenter l\'ouverture]'});
+    diags.push({c:'diag-warn', t: e2 + ' — [SOLUTION : fermer le diaphragme]'});
   } else if (aperture > 2.8) {
     var sev2 = aperture >= 16 ? 'diag-bad' : 'diag-warn';
     var e3;
@@ -714,7 +716,7 @@ function buildDiags(iso, speed, aperture) {
     else if (aperture >= 11) e3 = "L'arrière-plan est aussi net que le sujet, image sans relief";
     else if (aperture >= 8)  e3 = "Profondeur de champ trop grande, arrière-plan peu séparé du sujet";
     else                     e3 = "Le sujet manque d'isolation, arrière-plan trop présent";
-    diags.push({c: sev2, t: e3 + ' — [SOLUTION : diminuer l\'ouverture]'});
+    diags.push({c: sev2, t: e3 + ' — [SOLUTION : ouvrir le diaphragme]'});
   }
   if (iso < 800) {
     var sev3 = iso <= 100 ? 'diag-bad' : 'diag-warn';
